@@ -198,7 +198,7 @@ rabbitTemplate.convertAndSend("trade.topic", "order.create", itemIds, message ->
 
 上述方法虽然解决了传递问题，但是实际上，很多service层中的方法的参数都不包含userId，这是因为userid往往被存于`ThreadLocal`中，随用随取。所以需要将userId存入`ThreadLocal`之中，而如果每次Listener都添加一次又十分繁琐，所以应该设计一个方法使得userId自动被存于`ThreadLocal`之中。
 
-一个解决办法就是：通过重写消息转化器的fromMessage方法，使得每次消费者接收消息完成反序列化时自动将userId存于`TreadLocal`之中。该方法作为共有的配置类，存放于common模块下（这种共有的配置类一般会存放于一个普通的模块下）。具体实现如下：
+一个解决办法就是：通过重写消息转化器的`fromMessage`方法，使得每次消费者接收消息完成反序列化时自动将userId存于`TreadLocal`之中。该方法作为共有的配置类，存放于common模块下（这种共有的配置类一般会存放于一个普通的模块下）。具体实现如下：
 
 ```java
 @Configuration
@@ -225,3 +225,22 @@ public class MqConfig {
 
 该方法源于：https://b11et3un53m.feishu.cn/wiki/OQH4weMbcimUSLkIzD6cCpN0nvc?comment_id=7381508989902684163&comment_type=0&comment_anchor=true
 
+
+
+### Vue页面铺满问题
+
+#### Tag
+
+vue
+
+
+
+#### 问题
+
+vue默认无法全局铺满
+
+
+
+#### 解决办法
+
+给app.vue设置属性。
