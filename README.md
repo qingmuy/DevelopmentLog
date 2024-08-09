@@ -231,7 +231,7 @@ public class MqConfig {
 
 #### Tag
 
-vue
+vue 页面设计
 
 
 
@@ -243,4 +243,13 @@ vue默认无法全局铺满
 
 #### 解决办法
 
-给app.vue设置属性。
+给app.vue设置`style`属性，如下:
+
+```vue
+<style>
+#app{
+  margin: -8px -8px auto;
+}
+</style>
+```
+
