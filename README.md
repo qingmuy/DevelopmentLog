@@ -247,9 +247,61 @@ vue默认无法全局铺满
 
 ```vue
 <style>
-#app{
-  margin: -8px -8px auto;
+#app {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 </style>
 ```
+
+
+
+### Vue+vite修改启动端口
+
+#### Tag
+
+vue
+
+
+
+#### 解决办法
+
+在`package.json`中将启动项增添参数`--port 端口号`，如下：
+
+```json
+"scripts": {
+    "dev": "vite --port 8000",
+  },
+```
+
+
+
+### 微服务项目启动失败：缺失插件
+
+#### Tag
+
+SpringCloud
+
+
+
+#### 内容
+
+对Api模块引入了一个实体类，该实体类继承自一个`PageQuery`类，内部有MyBatis的东西，启动任何引入了API的项目均报错。这是因为即便是引用也需要导入对应Maven工程
+
+
+
+### ElasticSearch搜索条件为空
+
+#### Tag
+
+ElasticSearch
+
+
+
+#### 内容
+
+ElasticSearch的搜索条件为空时，如果Key为`""`或`null`时仍然算作是搜索条件，这时候应该进行判断处理：是否添加该条件
 
