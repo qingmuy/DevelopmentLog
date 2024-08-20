@@ -5,12 +5,6 @@
 
 ### 跨域问题
 
-#### Tag
-
-vue 跨域 经典
-
-
-
 #### 问题
 
 发送数据后端无法接收。
@@ -37,12 +31,6 @@ server:{
 
 ### Axios发送数据格式格式
 
-#### Tag
-
-vue axios 数据格式
-
-
-
 #### 问题
 
 后端使用`@RequestBody`注解，前端使用axios发送数据后端无法接收。
@@ -56,12 +44,6 @@ vue axios 数据格式
 
 
 ### 局域网内无法访问Vue服务
-
-#### Tag
-
-vue 网络
-
-
 
 #### 问题
 
@@ -84,12 +66,6 @@ vue 网络
 
 
 ### RabbitMQ监听数据失败
-
-#### Tag
-
-rabbitMq
-
-
 
 #### 问题
 
@@ -127,12 +103,6 @@ inequivalent arg 'type' for exchange 'trade.topic' in vhost '/hmall': received '
 
 ### RabbitMQ接收数据反序列化导致数据类型更改
 
-#### Tag
-
-rabbitMq 数据格式
-
-
-
 #### 问题
 
 在使用`rabbitTemplate`的`convertAndSend`方法传递数据时，数据的类型在传递后发生变化。
@@ -156,12 +126,6 @@ rabbitMq 数据格式
 
 
 ### RabbitMQ传递UserId
-
-#### Tag
-
-rabbitMq
-
-
 
 #### 问题
 
@@ -229,12 +193,6 @@ public class MqConfig {
 
 ### Vue页面铺满问题
 
-#### Tag
-
-vue 页面设计
-
-
-
 #### 问题
 
 vue默认无法全局铺满
@@ -261,12 +219,6 @@ vue默认无法全局铺满
 
 ### Vue+vite修改启动端口
 
-#### Tag
-
-vue
-
-
-
 #### 解决办法
 
 在`package.json`中将启动项增添参数`--port 端口号`，如下：
@@ -281,12 +233,6 @@ vue
 
 ### 微服务项目启动失败：缺失插件
 
-#### Tag
-
-SpringCloud
-
-
-
 #### 内容
 
 对Api模块引入了一个实体类，该实体类继承自一个`PageQuery`类，内部有MyBatis的东西，启动任何引入了API的项目均报错。这是因为即便是引用也需要导入对应Maven工程
@@ -294,12 +240,6 @@ SpringCloud
 
 
 ### ElasticSearch搜索条件为空
-
-#### Tag
-
-ElasticSearch
-
-
 
 #### 内容
 
@@ -312,3 +252,33 @@ ElasticSearch的搜索条件为空时，如果Key为`""`或`null`时仍然算作
 
 
 ### API项目启动
+
+
+
+### Ant Design Pro项目初始化
+
+#### 内容
+
+##### 创建
+
+使用`pro create appname`创建项目，使用`yarn`安装依赖，在选择安装`simple`还是`complete`时，应选择`simple`便于二次开发，而选用`complete`则可能产生初始化失败的问题：路由问题。
+
+
+
+##### 缩减项目
+
+删除国际化：执行`npm run i18n-remove`删除国家化语言模块，手动删除`.\src\locales`目录，再删除`.\src\components\index.ts`中的`SelectLang`模块
+
+
+
+### Ant Design Pro提交失败
+
+#### 问题
+
+报错信息为`.husky/_/husky.sh: No such file or directory`
+
+
+
+#### 解决办法
+
+将项目的`package.json`文件中`devDependencies`节点下的`husky`库删掉，然后删掉项目文件中的`.husky`文件夹，重新`yarn`一次即可。
