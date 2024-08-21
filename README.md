@@ -282,3 +282,35 @@ ElasticSearch的搜索条件为空时，如果Key为`""`或`null`时仍然算作
 #### 解决办法
 
 将项目的`package.json`文件中`devDependencies`节点下的`husky`库删掉，然后删掉项目文件中的`.husky`文件夹，重新`yarn`一次即可。
+
+
+
+### 解决Spring Boot启动警告的问题（强迫症
+
+#### 问题
+
+Spring Boot项目每次启动都会产生警告，如：
+
+```bash
+2024-08-21 12:19:22.370  WARN 22788 --- [  restartedMain] o.m.s.mapper.ClassPathMapperScanner      : Skipping MapperFactoryBean with name 'userMapper' and 'com.qingmuy.mapper.UserMapper' mapperInterface. Bean already defined with the same name!
+2024-08-21 12:19:22.370  WARN 22788 --- [  restartedMain] o.m.s.mapper.ClassPathMapperScanner      : No MyBatis mapper was found in '[com.qingmuy.mapper]' package. Please check your configuration.
+```
+
+```bash
+2024-08-21 12:19:24.036  WARN 22788 --- [  restartedMain] o.s.b.a.f.FreeMarkerAutoConfiguration    : Cannot find template location(s): [classpath:/templates/] (please add some templates, check your FreeMarker configuration, or set spring.freemarker.checkTemplateLocation=false)
+```
+
+
+
+#### 解决
+
+对于第一个警告而言，这是说明一个Bean类被重复扫描，经过检测之后，这是由于在启动类和MyBatisPlus分页设置中均进行了`@MapperScan`注解，这导致mapper文件被重复扫描。只需要删除分页配置中的`@MapperScan`注解即可。
+
+对于第二个警告：这是缺少模板的警告，只需要在`application.yaml`中配置即可：
+
+```yaml
+spring:
+  freemarker:
+    check-templateLocation: false
+```
+
