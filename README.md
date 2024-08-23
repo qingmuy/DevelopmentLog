@@ -314,3 +314,25 @@ spring:
     check-templateLocation: false
 ```
 
+
+
+### Ant Design Pro登录两次
+
+#### 问题
+
+使用Ant Design Pro登录时，初次登录成功但是页面不跳转，第二次登录成功才发生跳转。
+
+
+
+#### 解决
+
+产生原因是因为在app.tsx中的layout里，有个切换页面判断逻辑，非登录页currentUser没有值就会重定向到登录页，而组件销毁了还在设置状态（setState方法是异步更新的）
+
+所以设置登录状态后，不能立即跳转，需要设置一个延迟时间setTimeout。
+
+或者是使用`window.location`，设置跳转
+
+```js
+window.location.href="/";
+```
+
