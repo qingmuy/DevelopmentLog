@@ -557,3 +557,176 @@ window.location.href="/";
 而对于服务消费者来说，执行的是订阅操作而不是注册操作，也就是说它会对那些自己感兴趣的服务进行订阅，通过订阅操作就能从注册中心中，自动获取那些已经注册的服务提供者信息，这就是服务发现过程。
 
 注册中心本质上是一种架构模型，目前业界主流的一些比较具有代表性的实现工具，包括 Consul 、Zookeeper、Eureka、Nacos 等。
+
+
+
+### Linux防火墙端口设置
+
+开启端口：
+
+```bash
+firewall-cmd --zone=public --add-port=port_num/tcp --permanent
+```
+
+关闭端口：
+
+```bash
+firewall-cmd --zone=public --remove-port=port_num/tcp --permanent
+```
+
+重启防火墙：
+
+```bash
+firewall-cmd --reload
+service firewalld restart
+```
+
+查看已开放的端口列表：
+
+```bash
+firewall-cmd --permanent --list-port
+```
+
+
+
+
+
+
+
+### Zookeeper部署
+
+#### Linux部署
+
+在Linux上部署使用Docker即可，简化开发流程。
+
+拉取镜像：
+
+```bash
+docker pull zookeeper
+```
+
+将其部署在 `/usr/local/zookeeper` 目录下：
+
+```bash
+cd /usr/local && mkdir zookeeper && cd zookeeper
+```
+
+创建data目录，用于挂载容器中的数据目录：
+
+```bash
+mkdir data
+```
+
+Docker部署镜像：
+
+```bash
+docker run -d -e TZ="Asia/Shanghai" -p 2181:2181 -v $PWD/data:/data --name zookeeper --restart always zookeeper
+```
+
+
+
+需要注意的地方在于：
+
+大部分Docker的镜像被GFW屏蔽，目前可用的有：https://docker.1panel.live/
+
+部署后端口可能被防火墙屏蔽，需要打开指定端口。
+
+
+
+#### Windows部署
+
+在[Zookeeper官网](https://zookeeper.apache.org/index.html)下载稳定版安装包。
+
+使用如下命令解压tar包：
+
+```bash
+tar -zxvf apache-zookeeper-3.6.3.tar.gz
+```
+
+在解压后的文件目录下新增两个文件夹，一个命名为 data ，一个命名为 log。
+
+找到解压目录下的 conf 目录，将目录中的 zoo_sample.cfg 文件，复制一份，重命名为 zoo.cfg。
+
+修改 zoo.cfg 配置文件，将默认的 dataDir=/tmp/zookeeper 修改成 zookeeper 安装目录所在的data 文件夹，再增加数据日志的配置
+
+```properties
+dataLogDir=\\log
+```
+
+**注意**：路径需要使用`\\`而不是`\`
+
+先启动`zkServer.cmd`，再启动`zkCli.cmd`
+
+
+
+### Dubbo部署
+
+**Dubbo的官方文档 = 💩**
+
+由于Dubbo的依赖混乱等等，目前只摸索适用于Spring Boot 2的配置：
+
+```xml
+<properties>
+    <dubbo.version>2.7.8</dubbo.version>
+</properties>
+
+<!-- Dubbo -->
+<dependency>
+    <groupId>org.apache.dubbo</groupId>
+    <artifactId>dubbo-spring-boot-starter</artifactId>
+    <version>${dubbo.version}</version>
+</dependency>
+<!--Zookeeper-->
+<dependency>
+    <groupId>org.apache.dubbo</groupId>
+    <artifactId>dubbo-dependencies-zookeeper</artifactId>
+    <version>${dubbo.version}</version>
+    <type>pom</type>
+    <exclusions>
+        <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+```
+
+需要注意的是：
+
+- 提供方和消费方的依赖版本必须一致
+
+- `application.yaml`配置文件中关于Dubbo的配置必须要配置好连接重试时间：
+
+  ```yaml
+  dubbo:
+    application:
+      # 应用名称
+      name: order-provider
+    scan:
+      # 接口实现者（服务实现）包
+      base-packages: com.qingmuy.provider
+    # 注册中心信息
+    registry:
+      address: zookeeper://127.0.0.1:2181
+      timeout: 10000
+    protocol:
+      # 协议名称
+      name: dubbo
+      # 协议端口
+      port: 20880
+    config-center:
+      timeout: 10000
+  ```
+
+- 即便是消费者和提供者双方使用了相同的依赖也可能存在依赖不一致的情况，具体参考：
+
+  ![报错信息1](D:\Note\DevelopmentLog\assets\QQ图片20240913230514.png)
+
+  ![报错图片2](D:\Note\DevelopmentLog\assets\QQ图片20240913230522.png)
+
+  解决方案：导入相同版本的依赖的依赖
+
+- 无论提供方还是提供方必须在主类上声明`@EnableDubbo`注解
+
+
+
