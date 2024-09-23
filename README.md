@@ -759,3 +759,6 @@ dataLogDir=\\log
 
 解决方法就是在SDK的主类上使用`@ComponentScan`注解指定位置即可
 
+
+
+API平台小部分代码修改以及Redis项目的更新
