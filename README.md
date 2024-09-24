@@ -761,4 +761,8 @@ dataLogDir=\\log
 
 
 
-API平台小部分代码修改以及Redis项目的更新
+### MyBatis-Plus 3.4.3版本使用LambdaQueryWrapper查询报错
+
+![img](D:\Note\DevelopmentLog\assets\H7%%TD(KD{0%{O3D`L_O)%5.png)
+
+应将MyBatis-Plus版本提升至3.5.3
