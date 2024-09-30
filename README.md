@@ -773,3 +773,8 @@ dataLogDir=\\log
 
 使用npm安装ts-node以及tsc，需要作为一个项目去运行：其配置很低，主要在于要有`tsconfig.json`，且`tsconfig.json`只需使用`tsc --init`生成即可，随后在项目中创建一个ts文件，使用`ts-node 文件名`进行编译。
 
+
+
+
+
+享受假期
