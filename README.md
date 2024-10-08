@@ -799,3 +799,7 @@ dataLogDir=\\log
 
 
 为了解决方案二的代码耦合问题，使用canal进行解耦：canal自动读取binlog（数据库日志），侦测到变化即通知到canal客户端使用消息队列删除缓存
+
+
+
+Canal创建失败
