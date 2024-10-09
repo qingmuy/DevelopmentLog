@@ -803,3 +803,5 @@ dataLogDir=\\log
 
 
 Canal创建失败
+
+...javax.p?缺失
