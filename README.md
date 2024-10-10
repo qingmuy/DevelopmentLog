@@ -802,6 +802,334 @@ dataLogDir=\\log
 
 
 
-Canal创建失败
+### Canal的部署全过程
 
-...javax.p?缺失
+首先要准备好canal专用的数据库用户：
+
+```sql
+CREATE USER canal IDENTIFIED BY 'canal';  
+```
+
+该步骤创建的canal用户默认密码即为cana，实际上在实际场景下这个用户并不安全，应该有其他不易猜到的名字和密码：
+
+```sql
+create user '用户名'@'%' identified by '密码';
+```
+
+这里控制用户 Host 为`%`是因为 canal 被部署在虚拟机，所以要远程登录，该操作允许该用户使用远程登录，但**需要注意**的是：若 canal 与数据库部署在同一台机器，应控制 Host 为`localhost`，这是因为若开启远程登录则本地登录不可使用。
+
+对该用户进行授权，`*.*`代表所有数据库：
+
+```sql
+GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%' (identified by '密码');
+```
+
+刷新权限：
+
+```sql
+FLUSH PRIVILEGES;
+```
+
+接着修改数据库的配置文件，mysql如下：
+
+windows主机需要找到`my.ini`进行如下配置：
+
+```ini
+[mysqld]
+# 打开binlog
+log-bin=mysql-bin
+# 选择ROW(行)模式
+binlog-format=ROW
+# 配置MySQL replaction需要定义，不要和canal的slaveId重复
+server_id=1
+```
+
+对数据库进行重启即可：
+
+```bash
+# 使用管理员权限，进程名可能不同，该步骤同时完成了对权限的刷新
+net stop mysql80
+net start mysql80
+```
+
+如此完成了Mysql的配置，可使用如下语句检测是否配置成功：
+
+```sql
+# 是否开启mysql相关配置
+show variables like 'log_bin';
+show variables like 'binlog_format';
+show binary logs;
+# 查看用户权限
+use mysql;
+select * from user;
+# 查看正在连接的用户
+show processlist;
+```
+
+
+
+首先是使用 Docker 进行部署：
+
+拉取镜像：
+
+```bash
+docker pull canal/canal-server:latest
+```
+
+运行 docker 镜像：
+
+```dockerfile
+docker run -p 11111:11111 --name canal -d canal/canal-server:version
+```
+
+进入容器内部修改配置文件：
+
+```dockerfile
+docker exec -it canal /bin/bash
+```
+
+其配置文件处于该路径下：
+
+```bash
+/home/admin/canal-server/conf/example/instance.properties
+```
+
+修改配置文件：
+
+```properties
+#################################################
+## mysql serverId , v1.0.26+ will autoGen
+canal.instance.mysql.slaveId=0		# 不能与数据库重复
+
+# enable gtid use true/false
+canal.instance.gtidon=false
+
+# position info
+canal.instance.master.address=127.0.0.1:3306		# 这里要修改为自己的数据库地址
+canal.instance.master.journal.name=
+canal.instance.master.position=
+canal.instance.master.timestamp=
+canal.instance.master.gtid=
+
+# rds oss binlog
+canal.instance.rds.accesskey=
+canal.instance.rds.secretkey=
+canal.instance.rds.instanceId=
+
+# table meta tsdb info
+canal.instance.tsdb.enable=true
+#canal.instance.tsdb.url=jdbc:mysql://127.0.0.1:3306/canal_tsdb
+#canal.instance.tsdb.dbUsername=canal
+#canal.instance.tsdb.dbPassword=canal
+
+#canal.instance.standby.address =
+#canal.instance.standby.journal.name =
+#canal.instance.standby.position =
+#canal.instance.standby.timestamp =
+#canal.instance.standby.gtid=
+
+# username/password
+canal.instance.dbUsername=canal		# 这里要修改为canal使用的数据库用户名
+canal.instance.dbPassword=canal		# 这里要修改为canal使用的数据库密码
+canal.instance.connectionCharset = UTF-8
+# enable druid Decrypt database password
+canal.instance.enableDruid=false
+#canal.instance.pwdPublicKey=MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALK4BUxdDltRRE5/zXpVEVPUgunvscYFtEip3pmLlhrWpacX7y7GCMo2/JM6LeHmiiNdH1FWgGCpUfircSwlWKUCAwEAAQ==
+
+# table regex
+canal.instance.filter.regex=.*\\..*		# 需要监听的数据库
+# table black regex
+canal.instance.filter.black.regex=mysql\\.slave_.*		# 数据库黑名单（不监听）
+# table field filter(format: schema1.tableName1:field1/field2,schema2.tableName2:field1/field2)
+#canal.instance.filter.field=test1.t_product:id/subject/keywords,test2.t_company:id/name/contact/ch
+# table field black filter(format: schema1.tableName1:field1/field2,schema2.tableName2:field1/field2)
+#canal.instance.filter.black.field=test1.t_product:subject/product_image,test2.t_company:id/name/contact/ch
+
+# mq config
+canal.mq.topic=example
+# dynamic topic route by schema or table regex
+#canal.mq.dynamicTopic=mytest1.user,topic2:mytest2\\..*,.*\\..*
+canal.mq.partition=0
+# hash partition config
+#canal.mq.enableDynamicQueuePartition=false
+#canal.mq.partitionsNum=3
+#canal.mq.dynamicTopicPartitionNum=test.*:4,mycanal:6
+#canal.mq.partitionHash=test.table:id^name,.*\\..*
+#
+# multi stream for polardbx
+canal.instance.multi.stream.on=false
+#################################################
+```
+
+最后重启该镜像即可。
+
+
+
+直接在主机内部署Canal：
+
+从[项目地址](https://github.com/alibaba/canal/releases)下载deplover版本，解压即可。在linux中解压指令如下：
+
+```bash
+tar -zxvf 压缩包名
+```
+
+解压完成后过程如上，启动与终止方式如下：
+
+启动：在`/root/bin`下使用`./startup.sh`进行启动
+
+停止：如上，使用`./stop.sh`停止
+
+日志存放位置如下：`/root/logs/example/example.log`
+
+
+
+在windows上部署Canal：
+
+同上，不过启动方式为使用`/bin`目录下的`startup.dat`
+
+要注意的是，需要修改`startup.dat`内的部分内容：
+
+删掉启动配置里的：`-PermSize=128m`，以及`-Dlogback.configurationFile="%logback_configurationFile%"`即可。
+
+如出现报错，可在文件的最底部加上`pause`查看报错
+
+
+
+**需要特别注意的地方：**
+
+由于是在虚拟机内部署的 docker + canal ， 以及在主机部署的数据库 ，所以产生了一个问题：canal无法连接到主机的Mysql，这个问题困扰了我很久：主要是由于**主机Windows防火墙的策略**导致的，通过 telnet 测试表明 3306 端口是不通的，这表明主机的防火墙在 tcp 层级拦截了请求，所以需要提前在防火墙上建立规则。
+
+
+
+### Spring Boot 整合 Canal
+
+首先导入maven：
+
+```xml
+<dependency>
+    <groupId>top.javatool</groupId>
+    <artifactId>canal-spring-boot-starter</artifactId>
+    <version>1.2.1-RELEASE</version>
+</dependency>
+```
+
+在`application.yaml`配置 canal：
+
+```yaml
+canal:
+  server: 192.168.197.133:11111
+  destination: example
+```
+
+建立类进行配置：
+
+使用`@CanalTable`注解指定监听的数据库
+
+实现`EntryHandler<实体类>`接口
+
+该类可以重写`insert、 update、 delete`方法，即监听到相关操作即可接收到相关信息
+
+```java
+@CanalTable("user")
+@Component
+@Slf4j
+public class ItemHandler implements EntryHandler<User> {
+    
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
+
+    /**
+     * 监听数据库插入新数据
+     * @param user 新用户数据
+     */
+    @Override
+    public void insert(User user) {
+        log.info("监听到新用户注册：{}", user);
+        Map<String, Object> usermap = BeanUtil.beanToMap(user, new HashMap<>(),
+                CopyOptions.create()
+                        .setIgnoreNullValue(true)
+                        .setFieldValueEditor((fieldName, fieldValue) -> fieldValue.toString()));
+        stringRedisTemplate.opsForHash().putAll("user:" + user.getId(), usermap);
+    }
+}
+```
+
+
+
+**需要注意的是：**
+
+若数据库中的字段名与实体类定义的属性名不一致：即驼峰命名和下划线命名不一致，此时需要在实体类的属性上使用`@Column(name = "数据库字段名")`注解进行配置。
+
+
+
+若 canal 接收到的数据库中的空字段会报错，若接收到一些特殊类型的数据也会报错（如LocalDataTime）：
+
+这是由于`top.javatool.canal.client.util.StringConvertUtil.java`内部的`StringConvertUtil`这一方法仅实现了对一些常用类的转换，而对于空值和其他的类没有做处理，源代码如下：
+
+```java
+static Object convertType(Class<?> type, String columnValue) {
+    if (columnValue == null) {
+        return null;
+    } else if (type.equals(Integer.class)) {
+        return Integer.parseInt(columnValue);
+    } else if (type.equals(Long.class)) {
+        return Long.parseLong(columnValue);
+    } else if (type.equals(Boolean.class)) {
+        return convertToBoolean(columnValue);
+    } else if (type.equals(BigDecimal.class)) {
+        return new BigDecimal(columnValue);
+    } else if (type.equals(Double.class)) {
+        return Double.parseDouble(columnValue);
+    } else if (type.equals(Float.class)) {
+        return Float.parseFloat(columnValue);
+    } else if (type.equals(Date.class)) {
+        return parseDate(columnValue);
+    } else {
+        return type.equals(java.sql.Date.class) ? parseDate(columnValue) : columnValue;
+    }
+}
+```
+
+所以应该利用类加载器的加载顺序：双亲委派机制，只要创建一个同包同名的类。然后把原来的类复制过来，自己修改扩展即可，如下：
+
+![image-20241010190443871](D:\Note\DevelopmentLog\assets\image-20241010190443871.png)
+
+```java
+static Object convertType(Class<?> type, String columnValue) {
+    if (StringUtils.isBlank(columnValue)) {
+        return null;
+    } else if (type.equals(Integer.class)) {
+        return Integer.parseInt(columnValue);
+    } else if (type.equals(Long.class)) {
+        return Long.parseLong(columnValue);
+    } else if (type.equals(Boolean.class)) {
+        return convertToBoolean(columnValue);
+    } else if (type.equals(BigDecimal.class)) {
+        return new BigDecimal(columnValue);
+    } else if (type.equals(Double.class)) {
+        return Double.parseDouble(columnValue);
+    } else if (type.equals(Float.class)) {
+        return Float.parseFloat(columnValue);
+    } else if (type.equals(Date.class)) {
+        return parseDate(columnValue);
+    } else if (type.equals(LocalDateTime.class)) {
+        // 这里对LocalDataTime类型做了处理
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return LocalDateTime.parse(columnValue,df);
+    } else {
+        return type.equals(java.sql.Date.class) ? parseDate(columnValue) : columnValue;
+    }
+}
+```
+
+
+
+还有个小问题：canal 的日志刷新频率很高，导致一直在刷屏，可以在`application.yaml`进行如下配置：
+
+```yaml
+logging:
+  level:
+    top.javatool.canal.client: warn
+```
+
+或者修改AbstractCanalClient，注释掉日志打印
