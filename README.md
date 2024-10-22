@@ -807,7 +807,7 @@ dataLogDir=\\log
 首先要准备好canal专用的数据库用户：
 
 ```sql
-CREATE USER canal IDENTIFIED BY 'canal';  
+CREATE USER canal IDENTIFIED BY 'canal';
 ```
 
 该步骤创建的canal用户默认密码即为cana，实际上在实际场景下这个用户并不安全，应该有其他不易猜到的名字和密码：
@@ -1363,4 +1363,4 @@ public class RedissonConfig {
 
 
 
-秒杀环境部署
+秒杀环境部署完毕
