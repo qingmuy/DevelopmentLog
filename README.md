@@ -589,10 +589,6 @@ firewall-cmd --permanent --list-port
 
 
 
-
-
-
-
 ### Zookeeper部署
 
 #### Linux部署
@@ -802,7 +798,7 @@ dataLogDir=\\log
 
 
 
-### Canal的部署全过程
+### Canal的部署全过程以及避坑
 
 首先要准备好canal专用的数据库用户：
 
@@ -998,6 +994,10 @@ tar -zxvf 压缩包名
 **需要特别注意的地方：**
 
 由于是在虚拟机内部署的 docker + canal ， 以及在主机部署的数据库 ，所以产生了一个问题：canal无法连接到主机的Mysql，这个问题困扰了我很久：主要是由于**主机Windows防火墙的策略**导致的，通过 telnet 测试表明 3306 端口是不通的，这表明主机的防火墙在 tcp 层级拦截了请求，所以需要提前在防火墙上建立规则。
+
+如果 Canal 与 MySQL部署在同一个机器上，此时创建的 canal 用户实际上只拥有远程连接的权限，若直接启动 Canal 则会报错连接失败，这是因为该用户(Canal)不能直接本地登录，其解决办法也十分简单：只需要在本地通过命令行登录一次即可。详见：[Github：Canal报错](https://github.com/alibaba/canal/issues/146)
+
+
 
 
 
@@ -1363,6 +1363,74 @@ public class RedissonConfig {
 
 
 
-秒杀环境部署完毕
+### Docker的各种使用技巧总结
 
-缺失
+进入Docker容器的命令：
+
+```bash
+docker exec -it 容器名 bash
+```
+
+需要注意的是：每个Docker容器内部的环境不同，有的可能配置较全有vim一类，有的甚至vi都没有，所以以后创建容器时务必挂载配置目录方便后期修改配置。
+
+
+
+查看Docker容器的日志：
+
+```bash
+docker logs 容器名
+```
+
+查看最近10行日志：
+
+```bash
+docker logs --tail=10 容器名
+```
+
+
+
+### 服务器使用 Docker 部署 MySQL 端口映射问题
+
+问题产生十分简单，使用 Docker 部署 MySQL 使用如下配置：
+
+```bash
+docker run \
+-p port_num_1:port_num_2 \
+--restart=always \
+--name mysql \
+--privileged=true \
+-v /home/mysql/log:/var/log/mysql \
+-v /home/mysql/data:/var/lib/mysql \
+-v /home/mysql/conf/my.cnf:/etc/mysql/my.cnf \
+-e MYSQL_ROOT_PASSWORD=password \
+-d mysql:latest  
+```
+
+为了保证服务器安全性，我打算将服务器端口映射到随机端口，但是问题就出在这里：本以为port_num_1是映射前容器内端口，port_num_2是映射后公网端口，结果恰好相反，port_num_1才是映射到公网的端口。修改配置即可。
+
+
+
+### Redis的分片集群部署
+
+本质上就是复制配置文件后启动，然后使用将其聚合成集群，有时间再写部署流程。
+
+
+
+### Kafka的部署
+
+抽时间写。
+
+
+
+### Zookeeper的部署
+
+使用 Docker 部署时，可能产生一个小问题：启动时暴毙，报错权限不足，只需要给其挂载目录设置权限即可
+
+```bash
+chmod 777 dir
+```
+
+注意外层目录赋予权限后内层目录权限也需要设置
+
+
+
