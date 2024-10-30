@@ -1434,4 +1434,6 @@ chmod 777 dir
 
 
 
-秒杀项目
+### ElasticSearch集群部署
+
+单节点也可以算是一个集群，只需要jiang'qi
